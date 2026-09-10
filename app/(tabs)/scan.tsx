@@ -111,8 +111,8 @@ const styles = StyleSheet.create({
   },
 
   camera: {
-    ...StyleSheet.absoluteFillObject,
-  },
+  ...StyleSheet.absoluteFill,
+},
 
   title: {
     fontSize: 20,
