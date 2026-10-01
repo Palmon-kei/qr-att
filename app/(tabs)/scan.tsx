@@ -5,11 +5,12 @@ import { StyleSheet, Text, View } from 'react-native';
 import AppButton from '@/components/AppButton';
 import { COLORS } from '@/constants/colors';
 import { useAuth } from '@/lib/auth';
-import { registerAttendance } from '@/lib/database';
+import { registerAttendance } from '@/lib/attendance';
 
 export default function ScanScreen() {
   const { user } = useAuth();
-  const [permission, requestPermission] = useCameraPermissions();
+ const permission = { granted: false };
+const requestPermission = async () => {};
 
   const [scanned, setScanned] = useState(false);
   const [lastData, setLastData] = useState<string | null>(null);

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { supabase } from './supabase';
+import { ensureProfile } from './profiles';
 import type { Session, User } from '@supabase/supabase-js';
 
 type AuthState = {
@@ -10,11 +11,12 @@ type AuthState = {
 
 let globalSession: Session | null = null;
 let globalUser: User | null = null;
-let globalLoading = false;
-let listeners: Set<() => void> = new Set();
+let globalLoading = true;
+
+const listeners = new Set<() => void>();
 
 function notify() {
-  listeners.forEach((l) => l());
+  listeners.forEach((listener) => listener());
 }
 
 export function setAuth(session: Session | null) {
@@ -28,7 +30,9 @@ export function useAuth(): AuthState {
   const [, forceRender] = useState(0);
 
   useEffect(() => {
-    const listener = () => forceRender((n) => n + 1);
+    const listener = () => {
+      forceRender((value) => value + 1);
+    };
 
     listeners.add(listener);
 
@@ -44,20 +48,23 @@ export function useAuth(): AuthState {
   };
 }
 
-async function ensureProfile(user: User) {
-  const { error } = await supabase
-    .from('profiles')
-    .upsert(
-      {
-        id: user.id,
-        role: 'student',
-      },
-      {
-        onConflict: 'id',
-      }
-    );
+export async function initializeAuth() {
+  globalLoading = true;
+  notify();
 
-  return error;
+  const { data, error } = await supabase.auth.getSession();
+
+  if (error) {
+    console.error('Error loading authentication session:', error);
+    setAuth(null);
+    return;
+  }
+
+  if (data.session?.user) {
+    await ensureProfile(data.session.user.id);
+  }
+
+  setAuth(data.session);
 }
 
 export async function signUp(email: string, password: string) {
@@ -70,18 +77,8 @@ export async function signUp(email: string, password: string) {
     return { data, error };
   }
 
-  // If Supabase immediately gives us a session,
-  // create the profile now.
-  if (data.user && data.session) {
-    const profileError = await ensureProfile(data.user);
-
-    if (profileError) {
-      return {
-        data,
-        error: profileError,
-      };
-    }
-
+  if (data.session?.user) {
+    await ensureProfile(data.session.user.id);
     setAuth(data.session);
   }
 
@@ -98,16 +95,8 @@ export async function signIn(email: string, password: string) {
     return { data, error };
   }
 
-  if (data.user && data.session) {
-    const profileError = await ensureProfile(data.user);
-
-    if (profileError) {
-      return {
-        data,
-        error: profileError,
-      };
-    }
-
+  if (data.session?.user) {
+    await ensureProfile(data.session.user.id);
     setAuth(data.session);
   }
 
@@ -115,7 +104,9 @@ export async function signIn(email: string, password: string) {
 }
 
 export async function signOut() {
+  const { error } = await supabase.auth.signOut();
+
   setAuth(null);
-  supabase.auth.signOut().catch(() => {});
-  return { error: null };
+
+  return { error };
 }
