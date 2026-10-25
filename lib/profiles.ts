@@ -1,6 +1,8 @@
+
 import { supabase } from './supabase';
 
-export type Role = 'student' | 'teacher';
+// QRR KOP supports three user roles.
+export type Role = 'student' | 'teacher' | 'admin';
 
 export type Profile = {
   id: string;
@@ -10,7 +12,10 @@ export type Profile = {
   created_at: string;
 };
 
-export async function getProfile(userId: string): Promise<Profile | null> {
+// Load a user's profile from Supabase.
+export async function getProfile(
+  userId: string
+): Promise<Profile | null> {
   const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, role, student_id, created_at')
@@ -25,6 +30,37 @@ export async function getProfile(userId: string): Promise<Profile | null> {
   return data as Profile | null;
 }
 
+// Get the user's assigned role.
+export async function getUserRole(
+  userId: string
+): Promise<Role | null> {
+  const profile = await getProfile(userId);
+
+  if (!profile) {
+    return null;
+  }
+
+  return profile.role;
+}
+
+// Check whether a user is a Teacher.
+export async function isTeacher(
+  userId: string
+): Promise<boolean> {
+  const role = await getUserRole(userId);
+  return role === 'teacher';
+}
+
+// Check whether a user is an Admin.
+export async function isAdmin(
+  userId: string
+): Promise<boolean> {
+  const role = await getUserRole(userId);
+  return role === 'admin';
+}
+
+// Update editable profile information.
+// Role changes are intentionally not allowed here.
 export async function updateProfile(
   userId: string,
   updates: {
@@ -46,7 +82,12 @@ export async function updateProfile(
   return data as Profile;
 }
 
-export async function ensureProfile(userId: string): Promise<Profile | null> {
+// Ensure a user has a profile.
+// New profiles default to Student.
+// Existing Admin and Teacher roles are preserved.
+export async function ensureProfile(
+  userId: string
+): Promise<Profile | null> {
   const existing = await getProfile(userId);
 
   if (existing) {

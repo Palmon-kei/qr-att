@@ -1,24 +1,19 @@
 {
   "expo": {
-    "name": "QR-ATT",
+    "name": "QRR KOP",
     "slug": "QR-ATT",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/qrr-kop-app-icon.png",
     "scheme": "qr-attendance",
     "userInterfaceStyle": "light",
     "ios": {
       "supportsTablet": true
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
-      },
       "predictiveBackGestureEnabled": false,
-      "package": "com.kenshen2b.qratt"
+      "package": "com.kenshen2b.qratt",
+      "icon": "./assets/images/qrr-kop-app-icon.png"
     },
     "web": {
       "output": "static",
@@ -35,10 +30,17 @@
           "backgroundColor": "#ffffff"
         }
       ],
-      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow QRR KOP to use your camera to scan attendance QR codes.",
+          "recordAudioAndroid": false
+        }
+      ],
       "@react-native-community/datetimepicker",
       "expo-image",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-sharing"
     ],
     "experiments": {
       "reactCompiler": true
